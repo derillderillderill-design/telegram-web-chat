@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мега Чат Приложение</title>
-    <!-- ПРАВИЛЬНЫЙ СКРИПТ ТЕЛЕГРАМА -->
     <script src="https://telegram.org"></script>
     <style>
         body {
@@ -136,36 +135,42 @@
 
     <!-- НИЖНЕЕ МЕНЮ -->
     <div class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('global', '🌐 Общий чат', this)">
-            <div>🌐 Чат</div>
-        </div>
-        <div class="nav-item" onclick="switchTab('profile', '👤 Профиль', this)">
-            <div>👤 Профиль</div>
+        <div class="nav-bar">
+            <div class="nav-item active" onclick="switchTab('global', '🌐 Общий чат', this)">
+                <div>🌐 Чат</div>
+            </div>
+            <div class="nav-item" onclick="switchTab('profile', '👤 Профиль', this)">
+                <div>👤 Профиль</div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Инициализируем объект Telegram вручную для надежности
-        const tg = window.Telegram ? window.Telegram.WebApp : null;
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
-        function initApp() {
-            if (!tg) {
-                console.log("Telegram WebApp не найден");
-                return;
+        function parseAndLoadUserData() {
+            // Способ 1: Прямое чтение объекта
+            let user = tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
+
+            // Способ 2: Декодирование зашифрованной строки initData (для Кнопки Меню)
+            if (!user && tg.initData) {
+                try {
+                    const params = new URLSearchParams(tg.initData);
+                    const userParam = params.get('user');
+                    if (userParam) user = JSON.parse(userParam);
+                } catch (e) {
+                    console.error("Ошибка расшифровки данных:", e);
+                }
             }
-            tg.ready();
-            tg.expand();
 
-            // Принудительно вытягиваем данные
-            const initData = tg.initDataUnsafe;
-            if (initData && initData.user) {
-                const user = initData.user;
-                document.getElementById('u-name').innerText = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+            // Выводим данные на экран
+            if (user) {
+                const fullName = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+                document.getElementById('u-name').innerText = fullName;
                 document.getElementById('u-id').innerText = 'ID: ' + user.id;
                 document.getElementById('u-avatar').innerText = user.first_name.charAt(0).toUpperCase();
-            } else {
-                // Если Telegram еще загружается, пробуем повторить через 300 миллисекунд
-                setTimeout(initApp, 300);
             }
         }
 
@@ -175,13 +180,13 @@
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + tabId).classList.add('active');
             element.classList.add('active');
-            if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
         function sendMessageToBot() {
             const input = document.getElementById("msg-field");
             const text = input.value.trim();
-            if (!text || !tg) return;
+            if (!text) return;
 
             const data = {
                 source: "web_app_msg",
@@ -195,8 +200,8 @@
             if (e.key === "Enter") sendMessageToBot();
         });
 
-        // Запускаем проверку
-        initApp();
+        // Запускаем сбор данных при открытии
+        parseAndLoadUserData();
     </script>
 </body>
 </html>

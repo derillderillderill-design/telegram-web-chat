@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мега Чат Приложение</title>
+    <!-- ПРАВИЛЬНЫЙ СКРИПТ ТЕЛЕГРАМА -->
     <script src="https://telegram.org"></script>
     <style>
         body {
@@ -144,16 +145,28 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+        // Инициализируем объект Telegram вручную для надежности
+        const tg = window.Telegram ? window.Telegram.WebApp : null;
 
-        // Настоящие данные из Telegram подтягиваются мгновенно сами!
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const user = tg.initDataUnsafe.user;
-            document.getElementById('u-name').innerText = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-            document.getElementById('u-id').innerText = 'ID: ' + user.id;
-            document.getElementById('u-avatar').innerText = user.first_name.charAt(0).toUpperCase();
+        function initApp() {
+            if (!tg) {
+                console.log("Telegram WebApp не найден");
+                return;
+            }
+            tg.ready();
+            tg.expand();
+
+            // Принудительно вытягиваем данные
+            const initData = tg.initDataUnsafe;
+            if (initData && initData.user) {
+                const user = initData.user;
+                document.getElementById('u-name').innerText = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+                document.getElementById('u-id').innerText = 'ID: ' + user.id;
+                document.getElementById('u-avatar').innerText = user.first_name.charAt(0).toUpperCase();
+            } else {
+                // Если Telegram еще загружается, пробуем повторить через 300 миллисекунд
+                setTimeout(initApp, 300);
+            }
         }
 
         function switchTab(tabId, title, element) {
@@ -162,27 +175,28 @@
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + tabId).classList.add('active');
             element.classList.add('active');
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
-        // КЛЮЧЕВАЯ ФУНКЦИЯ: Шлём данные обратно в Бот без сторонних серверов!
         function sendMessageToBot() {
             const input = document.getElementById("msg-field");
             const text = input.value.trim();
-            if (!text) return;
+            if (!text || !tg) return;
 
-            // Передаем боту специальную метку web_app_msg, чтобы он отличил её от обычного текста
             const data = {
                 source: "web_app_msg",
                 text: text
             };
 
-            tg.sendData(JSON.stringify(data)); // Отправляет данные и закрывает Web App
+            tg.sendData(JSON.stringify(data));
         }
 
         document.getElementById("msg-field").addEventListener("keydown", function(e) {
             if (e.key === "Enter") sendMessageToBot();
         });
+
+        // Запускаем проверку
+        initApp();
     </script>
 </body>
 </html>

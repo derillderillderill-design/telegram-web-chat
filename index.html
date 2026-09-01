@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мега Чат Приложение</title>
+    <!-- Подключаем официальный скрипт Telegram Web App -->
+    <script src="https://telegram.org"></script>
+    <style>
+        /* Используем официальные цвета Telegram для идеальной интеграции */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color, #18222d);
+            color: var(--tg-theme-text-color, #ffffff);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Шапка приложения */
+        .header {
+            background-color: var(--tg-theme-secondary-bg-color, #212d3b);
+            padding: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Контентная зона, где меняются вкладки */
+        .content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: none; /* По умолчанию скрываем все */
+        }
+        .content.active {
+            display: block; /* Показываем только активную вкладку */
+        }
+
+        /* Стили для карточки профиля */
+        .profile-card {
+            background-color: var(--tg-theme-secondary-bg-color, #212d3b);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .profile-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background-color: #5288c1;
+            margin: 0 auto 15px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .btn-action {
+            background-color: var(--tg-theme-button-color, #5288c1);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        /* Список чатов и друзей */
+        .item-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .item-row {
+            display: flex;
+            align-items: center;
+            background-color: var(--tg-theme-secondary-bg-color, #212d3b);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        .item-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #436384;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Нижнее навигационное меню (Вкладки) */
+        .nav-bar {
+            display: flex;
+            background-color: var(--tg-theme-secondary-bg-color, #212d3b);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: max(10px, env(safe-area-inset-bottom)); /* Поддержка челок iPhone */
+        }
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 12px 5px;
+            font-size: 12px;
+            cursor: pointer;
+            color: var(--tg-theme-hint-color, #708499);
+            transition: color 0.2s;
+        }
+        .nav-item.active {
+            color: var(--tg-theme-button-color, #5288c1);
+            font-weight: bold;
+        }
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header" id="app-title">🌐 Общий чат</div>
+
+    <!-- ВКЛАДКА 1: ОБЩИЙ ЧАТ -->
+    <div id="tab-global" class="content active">
+        <ul class="item-list">
+            <div style="text-align: center; color: var(--tg-theme-hint-color); margin-top: 50px;">
+                💬 Здесь будет отображаться лента сообщений общего чата в реальном времени...
+            </div>
+        </ul>
+    </div>
+
+    <!-- ВКЛАДКА 2: ДРУЗЬЯ -->
+    <div id="tab-friends" class="content">
+        <ul class="item-list">
+            <li class="item-row">
+                <div class="item-avatar">ВП</div>
+                <div><b>Вася Пупкин</b><br><span style="font-size: 12px; color: #708499;">Онлайн</span></div>
+            </li>
+        </ul>
+    </div>
+
+    <!-- ВКЛАДКА 3: ДИАЛОГИ -->
+    <div id="tab-dialogs" class="content">
+        <ul class="item-list">
+            <li class="item-row">
+                <div class="item-avatar">ВП</div>
+                <div style="flex: 1;">
+                    <b>Вася Пупкин</b><br>
+                    <span style="font-size: 12px; color: #708499;">Последнее сообщение...</span>
+                </div>
+            </div>
+        </ul>
+    </div>
+
+    <!-- ВКЛАДКА 4: ПРОФИЛЬ -->
+    <div id="tab-profile" class="content">
+        <div class="profile-card">
+            <div class="profile-avatar" id="user-avatar">?</div>
+            <h2 style="margin: 0 0 5px 0;" id="user-name">Загрузка...</h2>
+            <p style="color: var(--tg-theme-hint-color); margin: 0 0 15px 0;" id="user-id">ID: 00000000</p>
+            <div style="text-align: left; font-size: 14px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+                <p>• <b>Друзей:</b> 1</p>
+                <p>• <b>Регистрация:</b> 02.09.2026</p>
+            </div>
+            <button class="btn-action" onclick="changeNickname()">⚙️ Изменить никнейм</button>
+        </div>
+    </div>
+
+    <!-- НИЖНЕЕ МЕНЮ ПЕРЕКЛЮЧЕНИЯ -->
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="switchTab('global', '🌐 Общий чат', this)">
+            <div class="nav-icon">🌐</div><div>Чат</div>
+        </div>
+        <div class="nav-item" onclick="switchTab('friends', '👥 Друзья', this)">
+            <div class="nav-icon">👥</div><div>Друзья</div>
+        </div>
+        <div class="nav-item" onclick="switchTab('dialogs', '📥 Мои диалоги', this)">
+            <div class="nav-icon">📥</div><div>Диалоги</div>
+        </div>
+        <div class="nav-item" onclick="switchTab('profile', '👤 Профиль', this)">
+            <div class="nav-icon">👤</div><div>Профиль</div>
+        </div>
+    </div>
+
+    <script>
+        // Сообщаем Telegram Web App, что мы готовы к работе и расширяем на весь экран
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        // Автоматически подтягиваем данные реального пользователя из Telegram!
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            const user = tg.initDataUnsafe.user;
+            document.getElementById('user-name').innerText = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+            document.getElementById('user-id').innerText = 'ID: ' + user.id;
+            document.getElementById('user-avatar').innerText = user.first_name.charAt(0);
+        }
+
+        // Функция плавного переключения вкладок без перезагрузки
+        function switchTab(tabId, title, element) {
+            document.getElementById('app-title').innerText = title;
+            
+            // Скрываем все вкладки и убираем подсветку кнопок
+            document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            // Показываем нужную вкладку и подсвечиваем кнопку
+            document.getElementById('tab-' + tabId).classList.add('active');
+            element.classList.add('active');
+            
+            // Легкая вибрация телефона при переключении вкладки для приятного отклика
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function changeNickname() {
+            // Пример вызова нативного окна ввода прямо внутри Telegram
+            tg.showPopup({
+                title: 'Никнейм',
+                message: 'Изменение никнейма временно настраивается.',
+                buttons: [{type: 'ok'}]
+            });
+        }
+    </script>
+</body>
+</html>
